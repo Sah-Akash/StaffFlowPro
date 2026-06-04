@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, CheckCircle2, XCircle, Clock, Check, X, ShieldAlert, User, Award, PlusCircle, CalendarDays } from 'lucide-react';
+import { Calendar, CheckCircle2, CheckCircle, XCircle, Clock, Check, X, ShieldAlert, User, Award, PlusCircle, CalendarDays } from 'lucide-react';
 import { Staff, AttendanceRecord, DayAttendance, ShiftStatus } from '../types';
 import { calculateSalaryBreakdown, formatCurrency, getMonthStats } from '../utils';
 
@@ -30,8 +30,13 @@ export default function HomeLogsPanel({
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
-  const [requestShift, setRequestShift] = useState<'morning' | 'night' | 'both'>('morning');
+  const [requestEndDate, setRequestEndDate] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  const [requestShift, setRequestShift] = useState<'morning' | 'night' | 'both'>('both'); // Default changed to both for range
   const [requestNote, setRequestNote] = useState<string>('');
+  const [requestApprover, setRequestApprover] = useState<'Akash' | 'Alojyoti' | 'Sumanta' | 'Any Admin'>('Any Admin');
   const [showRequestForm, setShowRequestForm] = useState<boolean>(false);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
@@ -87,38 +92,80 @@ export default function HomeLogsPanel({
     onSaveDayAttendance(staffId, selectedDate, updatedRecord);
   };
 
+  const getDatesInRange = (startDateStr: string, endDateStr: string): string[] => {
+    const dates: string[] = [];
+    if (!startDateStr) return [];
+    
+    // If end date is not provided or is earlier than start date, default to single day
+    const start = new Date(startDateStr + 'T00:00:00');
+    let end = new Date((endDateStr || startDateStr) + 'T00:00:00');
+    if (isNaN(end.getTime()) || end < start) {
+      end = new Date(start);
+    }
+
+    const temp = new Date(start);
+    let count = 0;
+    while (temp <= end && count < 31) { // 31-day safety limit
+      const yyyy = temp.getFullYear();
+      const mm = String(temp.getMonth() + 1).padStart(2, '0');
+      const dd = String(temp.getDate()).padStart(2, '0');
+      dates.push(`${yyyy}-${mm}-${dd}`);
+      temp.setDate(temp.getDate() + 1);
+      count++;
+    }
+    return dates;
+  };
+
+  const isConsecutiveDay = (dayA: string, dayB: string): boolean => {
+    const dateA = new Date(dayA + 'T00:00:00');
+    dateA.setDate(dateA.getDate() + 1);
+    const nextY = dateA.getFullYear();
+    const nextM = String(dateA.getMonth() + 1).padStart(2, '0');
+    const nextD = String(dateA.getDate()).padStart(2, '0');
+    return `${nextY}-${nextM}-${nextD}` === dayB;
+  };
+
   // Submit Leave Request (Marks as leave_pending)
   const handleRequestLeave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!requestStaffId || !requestDate) return;
 
-    const existingRecord: DayAttendance = attendance[requestStaffId]?.[requestDate] || {
-      morning: 'present',
-      night: 'present'
-    };
+    // Use requestEndDate, defaulting to requestDate if empty or invalid range
+    const datesToRequest = getDatesInRange(requestDate, requestEndDate || requestDate);
+    if (datesToRequest.length === 0) return;
 
-    const updatedRecord: DayAttendance = { ...existingRecord };
-    
-    if (requestShift === 'morning' || requestShift === 'both') {
-      updatedRecord.morning = 'leave_pending';
-      updatedRecord.morningApprovedBy = undefined;
-    }
-    if (requestShift === 'night' || requestShift === 'both') {
-      updatedRecord.night = 'leave_pending';
-      updatedRecord.nightApprovedBy = undefined;
-    }
-    if (requestNote) {
-      updatedRecord.note = requestNote;
-    }
+    datesToRequest.forEach(dateStr => {
+      const existingRecord: DayAttendance = attendance[requestStaffId]?.[dateStr] || {
+        morning: 'present',
+        night: 'present'
+      };
 
-    onSaveDayAttendance(requestStaffId, requestDate, updatedRecord);
+      const updatedRecord: DayAttendance = { ...existingRecord };
+      
+      if (requestShift === 'morning' || requestShift === 'both') {
+        updatedRecord.morning = 'leave_pending';
+        updatedRecord.morningApprovedBy = undefined;
+      }
+      if (requestShift === 'night' || requestShift === 'both') {
+        updatedRecord.night = 'leave_pending';
+        updatedRecord.nightApprovedBy = undefined;
+      }
+      updatedRecord.requestedApprover = requestApprover;
+      
+      if (requestNote) {
+        updatedRecord.note = requestNote;
+      }
 
-    setFormSuccess("Permission request submitted successfully! Pending approval from Akash, Alojyoti or Sumanta.");
+      onSaveDayAttendance(requestStaffId, dateStr, updatedRecord);
+    });
+
+    const daysText = datesToRequest.length === 1 ? "1 day" : `${datesToRequest.length} days`;
+    setFormSuccess(`Permission request for ${daysText} submitted successfully! Pending approval from ${requestApprover === 'Any Admin' ? 'Akash, Alojyoti or Sumanta' : requestApprover}.`);
     setRequestNote('');
     setTimeout(() => {
       setFormSuccess(null);
       setShowRequestForm(false);
-    }, 4000);
+    }, 4005);
   };
 
   // Find all leave_pending records across ALL staff and dates in memory
@@ -129,6 +176,7 @@ export default function HomeLogsPanel({
     dateStr: string;
     shift: 'morning' | 'night' | 'both';
     note?: string;
+    requestedApprover?: 'Akash' | 'Alojyoti' | 'Sumanta' | 'Any Admin';
   }
 
   const getPendingApprovals = (): PendingApprovalItem[] => {
@@ -149,7 +197,8 @@ export default function HomeLogsPanel({
             role: s.role,
             dateStr,
             shift: 'both',
-            note: record.note
+            note: record.note,
+            requestedApprover: record.requestedApprover
           });
         } else if (morningPending) {
           list.push({
@@ -158,7 +207,8 @@ export default function HomeLogsPanel({
             role: s.role,
             dateStr,
             shift: 'morning',
-            note: record.note
+            note: record.note,
+            requestedApprover: record.requestedApprover
           });
         } else if (nightPending) {
           list.push({
@@ -167,7 +217,8 @@ export default function HomeLogsPanel({
             role: s.role,
             dateStr,
             shift: 'night',
-            note: record.note
+            note: record.note,
+            requestedApprover: record.requestedApprover
           });
         }
       });
@@ -175,6 +226,100 @@ export default function HomeLogsPanel({
 
     // Sort by date descending
     return list.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+  };
+
+  // Grouped approved-leaves interface
+  interface GroupedLeaveLog {
+    staffId: string;
+    staffName: string;
+    role: string;
+    startDateStr: string;
+    endDateStr: string;
+    daysCount: number;
+    notes: string[];
+    approvers: string[];
+    shiftType: 'morning' | 'night' | 'both';
+  }
+
+  // Find and group consecutive dates of approved leaves for all staff
+  const getApprovedLeaveLogs = (): GroupedLeaveLog[] => {
+    const allLogs: GroupedLeaveLog[] = [];
+    
+    staffList.forEach(s => {
+      const records = attendance[s.id] || {};
+      // Filter dates with approved leaves
+      const approvedDates = Object.keys(records).filter(dateStr => {
+        const rec = records[dateStr];
+        return rec && (rec.morning === 'leave_approved' || rec.night === 'leave_approved');
+      });
+      
+      if (approvedDates.length === 0) return;
+      
+      // Sort dates ascending
+      approvedDates.sort((a, b) => a.localeCompare(b));
+      
+      let currentGroup: string[] = [];
+      
+      approvedDates.forEach((dateStr, idx) => {
+        if (currentGroup.length === 0) {
+          currentGroup.push(dateStr);
+        } else {
+          const lastDate = currentGroup[currentGroup.length - 1];
+          if (isConsecutiveDay(lastDate, dateStr)) {
+            currentGroup.push(dateStr);
+          } else {
+            allLogs.push(buildGroupedLog(s, currentGroup, records));
+            currentGroup = [dateStr];
+          }
+        }
+        
+        if (idx === approvedDates.length - 1 && currentGroup.length > 0) {
+          allLogs.push(buildGroupedLog(s, currentGroup, records));
+        }
+      });
+    });
+
+    // Sort log history descending by start date
+    return allLogs.sort((a, b) => b.startDateStr.localeCompare(a.startDateStr));
+  };
+
+  const buildGroupedLog = (staff: Staff, dates: string[], records: Record<string, DayAttendance>): GroupedLeaveLog => {
+    const notesSet = new Set<string>();
+    const approversSet = new Set<string>();
+    
+    let morningCount = 0;
+    let nightCount = 0;
+
+    dates.forEach(dateStr => {
+      const rec = records[dateStr];
+      if (rec) {
+        if (rec.note) notesSet.add(rec.note);
+        if (rec.morning === 'leave_approved') {
+          morningCount++;
+          if (rec.morningApprovedBy) approversSet.add(rec.morningApprovedBy);
+        }
+        if (rec.night === 'leave_approved') {
+          nightCount++;
+          if (rec.nightApprovedBy) approversSet.add(rec.nightApprovedBy);
+        }
+      }
+    });
+
+    let detectedShift: 'morning' | 'night' | 'both' = 'both';
+    if (morningCount > 0 && nightCount === 0) detectedShift = 'morning';
+    else if (nightCount > 0 && morningCount === 0) detectedShift = 'night';
+
+    return {
+      staffId: staff.id,
+      staffName: staff.name,
+      role: staff.role,
+      startDateStr: dates[0],
+      endDateStr: dates[dates.length - 1],
+      daysCount: dates.length,
+      notes: Array.from(notesSet),
+      approvers: Array.from(approversSet),
+      shiftType: detectedShift
+    };
   };
 
   const pendingApprovals = getPendingApprovals();
@@ -385,8 +530,8 @@ export default function HomeLogsPanel({
 
           {/* Interactive Leave Taker Request Form */}
           {showRequestForm && (
-            <div className="mt-4 p-4 rounded-xl border border-dashed border-indigo-150 bg-indigo-50/15 dark:bg-indigo-950/10 space-y-4">
-              <h3 className="text-xs font-bold text-slate-800 dark:text-indigo-400 uppercase tracking-tight">Record Leave Request (Requires Approval)</h3>
+            <div className="mt-4 p-4 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/15 dark:bg-indigo-950/10 space-y-4">
+              <h3 className="text-xs font-bold text-slate-800 dark:text-indigo-400 uppercase tracking-tight">Record Leave Request (Single or Range)</h3>
               
               {formSuccess && (
                 <div className="p-2.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs leading-normal">
@@ -395,7 +540,7 @@ export default function HomeLogsPanel({
               )}
 
               <form onSubmit={handleRequestLeave} className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Staff Member</label>
                     <select
@@ -410,11 +555,27 @@ export default function HomeLogsPanel({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Leave Date</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Start Date</label>
                     <input
                       type="date"
                       value={requestDate}
-                      onChange={(e) => setRequestDate(e.target.value)}
+                      onChange={(e) => {
+                        setRequestDate(e.target.value);
+                        if (!requestEndDate || requestEndDate < e.target.value) {
+                          setRequestEndDate(e.target.value);
+                        }
+                      }}
+                      className="mt-1 w-full p-2 text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-lg focus:outline-hidden font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">End Date</label>
+                    <input
+                      type="date"
+                      value={requestEndDate}
+                      onChange={(e) => setRequestEndDate(e.target.value)}
+                      min={requestDate}
                       className="mt-1 w-full p-2 text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-lg focus:outline-hidden font-mono"
                     />
                   </div>
@@ -433,22 +594,38 @@ export default function HomeLogsPanel({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Reason for Leave</label>
-                  <input
-                    type="text"
-                    value={requestNote}
-                    onChange={(e) => setRequestNote(e.target.value)}
-                    placeholder="e.g. Health emergency, Urgent travels"
-                    className="mt-1 w-full p-2 text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-lg focus:outline-hidden"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Submit Option (Submit To)</label>
+                    <select
+                      value={requestApprover}
+                      onChange={(e) => setRequestApprover(e.target.value as any)}
+                      className="mt-1 w-full p-2 text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-lg focus:outline-hidden font-bold"
+                    >
+                      <option value="Any Admin">Any Admin (Anyone can approve)</option>
+                      <option value="Akash">Akash</option>
+                      <option value="Alojyoti">Alojyoti</option>
+                      <option value="Sumanta">Sumanta</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Reason for Leave (Why)</label>
+                    <input
+                      type="text"
+                      value={requestNote}
+                      onChange={(e) => setRequestNote(e.target.value)}
+                      placeholder="e.g. Wedding, Personal, Sick, Out of town"
+                      className="mt-1 w-full p-2 text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-lg focus:outline-hidden"
+                    />
+                  </div>
                 </div>
 
                 <button
                   type="submit"
                   className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm"
                 >
-                  Submit for Approval to Akash/Alojyoti/Sumanta
+                  Submit Request for Approval
                 </button>
               </form>
             </div>
@@ -552,6 +729,11 @@ export default function HomeLogsPanel({
                             <p className="text-[10.5px] text-slate-500 font-mono mt-0.5">
                               {formattedDate} • <span className="capitalize">{req.shift} shift</span>
                             </p>
+                            {req.requestedApprover && (
+                              <p className="text-[9.5px] bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded mt-1 w-fit font-mono font-bold">
+                                Target Approver: {req.requestedApprover}
+                              </p>
+                            )}
                             {req.note && (
                               <p className="text-[10px] text-amber-700 dark:text-amber-400 italic bg-amber-500/10 dark:bg-amber-950/30 p-1.5 rounded-md mt-1 leading-normal">
                                 Reason: "{req.note}"
@@ -589,7 +771,84 @@ export default function HomeLogsPanel({
                 </div>
               )}
             </div>
+          </div>
 
+          {/* Approved Leave & Authorization History Audit Queue */}
+          <div className="sleek-card p-5 flex-1 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-1.5 label-approved-audit font-display">
+                  <CheckCircle className="h-4 w-4 text-emerald-500" />
+                  Authorization Audit Logs
+                </h2>
+                <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-md">
+                  {getApprovedLeaveLogs().length} Logged
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-4">Official record of leave permissions showing who gave authorization, the reason, and duration.</p>
+
+              {getApprovedLeaveLogs().length === 0 ? (
+                <div className="py-8 text-center border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1">
+                  <p className="text-xs font-bold text-slate-400">No approved leave authorizations logged yet.</p>
+                  <p className="text-[10px] text-slate-405 text-slate-400">Approved leaves appear here with full audits.</p>
+                </div>
+              ) : (
+                <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
+                  {getApprovedLeaveLogs().map((log, idx) => {
+                    const formatLogDate = (dStr: string) => {
+                      try {
+                        return new Date(dStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                      } catch {
+                        return dStr;
+                      }
+                    };
+
+                    const dateDisplay = log.startDateStr === log.endDateStr 
+                      ? formatLogDate(log.startDateStr)
+                      : `${formatLogDate(log.startDateStr)} - ${formatLogDate(log.endDateStr)}`;
+
+                    return (
+                      <div key={idx} className="p-3 bg-zinc-50/50 dark:bg-zinc-950/40 border border-zinc-150/40 dark:border-zinc-800 rounded-xl space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-bold text-slate-900 dark:text-slate-200 text-xs">
+                              {log.staffName}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-mono">
+                              {log.role}
+                            </p>
+                          </div>
+                          <span className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-350 text-[10px] font-mono font-bold rounded">
+                            {log.daysCount} {log.daysCount === 1 ? 'day' : 'days'}
+                          </span>
+                        </div>
+
+                        <div className="text-[10.5px] font-mono text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>{dateDisplay}</span>
+                          <span className="capitalize text-[9.5px] px-1 bg-indigo-50 dark:bg-indigo-950 rounded font-bold font-sans">
+                            {log.shiftType === 'both' ? 'Full Day' : `${log.shiftType} shift`}
+                          </span>
+                        </div>
+
+                        {log.notes.length > 0 && (
+                          <div className="text-[10.5px] text-slate-500 dark:text-slate-450 italic bg-white dark:bg-slate-950 px-2.5 py-1.5 rounded border border-slate-100 dark:border-slate-850 leading-normal">
+                            Reason: "{log.notes.join('; ')}"
+                          </div>
+                        )}
+
+                        <div className="pt-2 border-t border-slate-100 dark:border-zinc-850 flex items-center justify-between text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Authorized By:</span>
+                          <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono uppercase bg-emerald-500/10 dark:bg-emerald-500/15 px-2 py-0.5 rounded border border-emerald-500/20">
+                            ✓ {log.approvers.length > 0 ? log.approvers.join(', ') : 'Admin'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
         </div>

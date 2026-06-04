@@ -16,6 +16,7 @@ export interface DayAttendance {
   note?: string;
   morningApprovedBy?: 'Akash' | 'Alojyoti' | 'Sumanta';
   nightApprovedBy?: 'Akash' | 'Alojyoti' | 'Sumanta';
+  requestedApprover?: 'Akash' | 'Alojyoti' | 'Sumanta' | 'Any Admin';
 }
 
 // Map from staff ID to a map of Date (YYYY-MM-DD) to DayAttendance

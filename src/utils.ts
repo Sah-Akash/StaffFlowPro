@@ -290,7 +290,8 @@ export function validateBackup(json: any): { staff: Staff[]; attendance: Attenda
                      dayData.night === 'leave_approved' ? 'leave_approved' : 'present',
               note: dayData.note ? String(dayData.note) : undefined,
               morningApprovedBy: dayData.morningApprovedBy || undefined,
-              nightApprovedBy: dayData.nightApprovedBy || undefined
+              nightApprovedBy: dayData.nightApprovedBy || undefined,
+              requestedApprover: dayData.requestedApprover || undefined
             };
           }
         });
