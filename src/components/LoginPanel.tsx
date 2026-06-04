@@ -160,9 +160,10 @@ export default function LoginPanel({ onLoginSuccess }: LoginPanelProps) {
       </motion.div>
 
       {/* Security notice footer */}
-      <div className="mt-8 text-center text-[10px] text-slate-400 font-mono max-w-xs space-y-1">
-        <p>Protected by end-to-end Local Persistence.</p>
-        <p>Credentials: admin / admin (shared across logs)</p>
+      <div className="mt-8 text-center text-[10px] text-slate-400 dark:text-slate-500 font-mono max-w-xs space-y-1">
+        <p className="font-semibold text-slate-600 dark:text-slate-300">Created by Akash Sah</p>
+        <p>Enforced by SSL Protection & Real-time Cloud Synchronization</p>
+        <p>© {new Date().getFullYear()} StaffFlow Pro. All Rights Reserved.</p>
       </div>
     </div>
   );
