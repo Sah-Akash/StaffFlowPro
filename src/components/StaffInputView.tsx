@@ -116,7 +116,7 @@ export default function StaffInputView({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left Column (5/12): Add New Staff Form */}
-        <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-xs h-fit">
+        <div className="lg:col-span-5 sleek-card p-6 h-fit">
           <div className="space-y-4 mb-5">
             <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-1.5">
               <UserPlus className="h-4.5 w-4.5 text-indigo-600" />
@@ -192,7 +192,7 @@ export default function StaffInputView({
         </div>
 
         {/* Right Column (7/12): Current Staff Profiles Audit List */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-7 sleek-card p-6 flex flex-col justify-between">
           <div className="space-y-4">
             
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">

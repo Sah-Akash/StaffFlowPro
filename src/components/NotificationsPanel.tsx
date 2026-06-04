@@ -137,7 +137,7 @@ export default function NotificationsPanel({
                 </div>
               ) : (
                 notifications.map(notif => {
-                  let iconBg = 'bg-blue-50 text-blue-500 dark:bg-blue-900/20 dark:text-blue-400';
+                  let iconBg = 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400';
                   let icon = <Sparkles className="h-4 w-4" />;
 
                   if (notif.type === 'warning') {

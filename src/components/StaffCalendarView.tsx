@@ -82,7 +82,7 @@ export default function StaffCalendarView({
     <div className="space-y-6">
       
       {/* Selection Control Panel */}
-      <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+      <div className="p-5 sleek-card">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
           
           <div className="space-y-1">
@@ -141,7 +141,7 @@ export default function StaffCalendarView({
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
           {/* Calendar Month Grid */}
-          <div className="lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-xs">
+          <div className="lg:col-span-3 sleek-card p-6">
             
             {/* Grid Header */}
             <div className="grid grid-cols-7 gap-1 text-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-2">
@@ -263,7 +263,7 @@ export default function StaffCalendarView({
           </div>
 
           {/* Right Summary Sidebar Info Panel */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="sleek-card p-5 flex flex-col justify-between">
             <div className="space-y-6">
               
               <div className="border-b border-slate-100 dark:border-slate-800 pb-3">

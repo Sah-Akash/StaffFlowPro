@@ -28,8 +28,8 @@ export default function DashboardCards({ salaryBreakdowns }: DashboardCardsProps
       value: `${totalWorkingDays} days`,
       description: "Mon - Sat this month",
       icon: <Calendar className="h-4 w-4" />,
-      colorClass: "text-indigo-500",
-      bgClass: "bg-indigo-50/50 dark:bg-indigo-950/20"
+      colorClass: "text-slate-900 dark:text-slate-100",
+      bgClass: "bg-zinc-100 dark:bg-zinc-800"
     },
     {
       id: "stat-present",
@@ -37,8 +37,8 @@ export default function DashboardCards({ salaryBreakdowns }: DashboardCardsProps
       value: totalPresentShifts,
       description: `Out of ${totalShifts} possible shifts`,
       icon: <CheckCircle2 className="h-4 w-4" />,
-      colorClass: "text-emerald-505 text-emerald-600 dark:text-emerald-400",
-      bgClass: "bg-emerald-50/40 dark:bg-emerald-950/20"
+      colorClass: "text-emerald-600 dark:text-emerald-400",
+      bgClass: "bg-emerald-500/10 dark:bg-emerald-500/20"
     },
     {
       id: "stat-missed",
@@ -46,8 +46,8 @@ export default function DashboardCards({ salaryBreakdowns }: DashboardCardsProps
       value: totalMissedShifts,
       description: `${totalMissedShifts} shift deductions applied`,
       icon: <XCircle className="h-4 w-4" />,
-      colorClass: "text-rose-505 text-rose-600 dark:text-rose-400",
-      bgClass: "bg-rose-50/40 dark:bg-rose-950/20"
+      colorClass: "text-rose-600 dark:text-rose-450",
+      bgClass: "bg-rose-500/10 dark:bg-rose-500/20"
     },
     {
       id: "stat-percentage",
@@ -56,7 +56,7 @@ export default function DashboardCards({ salaryBreakdowns }: DashboardCardsProps
       description: "Household attendance avg",
       icon: <Activity className="h-4 w-4" />,
       colorClass: averageAttendance >= 90 ? "text-emerald-500" : averageAttendance >= 75 ? "text-amber-500" : "text-rose-500",
-      bgClass: "bg-sky-50/50 dark:bg-sky-950/20"
+      bgClass: "bg-zinc-100 dark:bg-zinc-800"
     },
     {
       id: "stat-earned",
@@ -64,8 +64,8 @@ export default function DashboardCards({ salaryBreakdowns }: DashboardCardsProps
       value: formatCurrency(totalSalaryEarned),
       description: "Accumulated daily salary",
       icon: <Wallet className="h-4 w-4" />,
-      colorClass: "text-teal-600 dark:text-teal-400",
-      bgClass: "bg-teal-50/40 dark:bg-teal-950/20"
+      colorClass: "text-slate-900 dark:text-slate-100",
+      bgClass: "bg-zinc-100 dark:bg-zinc-800"
     },
     {
       id: "stat-pending",
@@ -73,8 +73,8 @@ export default function DashboardCards({ salaryBreakdowns }: DashboardCardsProps
       value: formatCurrency(Math.max(0, totalPendingSalary)),
       description: "Outstanding end-of-month payable",
       icon: <Wallet className="h-4 w-4" />,
-      colorClass: "text-violet-605 text-violet-600 dark:text-violet-400",
-      bgClass: "bg-violet-50/40 dark:bg-violet-950/20"
+      colorClass: "text-slate-900 dark:text-slate-105",
+      bgClass: "bg-zinc-100 dark:bg-zinc-800"
     }
   ];
 

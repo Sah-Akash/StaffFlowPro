@@ -303,7 +303,7 @@ export default function App() {
                     onDeleteStaff={handleDeleteStaff}
                   />
                   
-                  <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+                  <div className="p-6 sleek-card">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-slate-105 uppercase tracking-tight mb-4">
                       Roster Backups
                     </h3>

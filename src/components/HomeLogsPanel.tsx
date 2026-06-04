@@ -225,14 +225,14 @@ export default function HomeLogsPanel({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left 7 Columns: Date log, Shifts toggle & Permission Request trigger */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-7 sleek-card p-6 flex flex-col justify-between">
           <div className="space-y-6">
             
             {/* Header with quick date selector */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
                 <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-1.5">
-                  <Calendar className="h-4.5 w-4.5 text-indigo-600" />
+                  <Calendar className="h-4.5 w-4.5 text-indigo-505 text-indigo-500" />
                   Daily Shift Log
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">Toggle morning & night shifts to log attendance</p>
@@ -241,7 +241,7 @@ export default function HomeLogsPanel({
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => adjustDateByDays(-1)}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs transition"
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs transition active:scale-95 cursor-pointer"
                 >
                   ◀
                 </button>
@@ -253,11 +253,11 @@ export default function HomeLogsPanel({
                       setSelectedDate(e.target.value);
                     }
                   }} 
-                  className="px-2.5 py-1 text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-indigo-500 font-mono"
+                  className="px-2.5 py-1 text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-indigo-500 font-mono hover:border-indigo-400 dark:hover:border-indigo-500"
                 />
                 <button 
                   onClick={() => adjustDateByDays(1)}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs transition"
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs transition active:scale-95 cursor-pointer"
                 >
                   ▶
                 </button>
@@ -265,10 +265,10 @@ export default function HomeLogsPanel({
             </div>
 
             {/* Display active selected date */}
-            <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl text-center text-xs font-semibold text-indigo-700 dark:text-indigo-400 font-mono flex items-center justify-center gap-1">
+            <div className="bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-200/20 dark:border-indigo-500/20 p-2.5 rounded-xl text-center text-xs font-semibold text-indigo-600 dark:text-indigo-400 font-mono flex items-center justify-center gap-1">
               <CalendarDays className="h-4 w-4" />
               Viewing: {getSelectedDateLabel()}
-              {isSelectedDateSunday() && <span className="ml-2 px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 rounded-full text-[10px]">Rest Day (Sunday)</span>}
+              {isSelectedDateSunday() && <span className="ml-2 px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-450 rounded-full text-[10px]">Rest Day (Sunday)</span>}
             </div>
 
             {/* Toggles Container */}
@@ -287,7 +287,7 @@ export default function HomeLogsPanel({
                         
                         {/* Member Details */}
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center font-bold text-indigo-700 dark:text-indigo-300">
+                          <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-extrabold text-slate-900 dark:text-white border border-zinc-200 dark:border-zinc-700">
                             {member.name.charAt(0)}
                           </div>
                           <div>
@@ -304,20 +304,20 @@ export default function HomeLogsPanel({
                             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Morning Shift</span>
                             <button
                               onClick={() => toggleShiftValue(member.id, 'morning')}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-200 cursor-pointer flex items-center gap-1 border ${
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 border hover:scale-102 hover:shadow-xs ${
                                 record.morning === 'present'
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
+                                  ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30'
                                   : record.morning === 'leave_approved'
-                                  ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-900'
+                                  ? 'bg-sky-500/10 text-sky-700 border-sky-500/20 dark:bg-sky-500/15 dark:text-sky-305 dark:border-sky-500/30'
                                   : record.morning === 'leave_pending'
-                                  ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
-                                  : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900'
+                                  ? 'bg-amber-505 bg-amber-500/10 text-amber-700 border-amber-500/20 dark:bg-amber-500/15 dark:text-amber-305 dark:border-amber-500/30'
+                                  : 'bg-rose-500/10 text-rose-700 border-rose-500/20 dark:bg-rose-500/15 dark:text-rose-305 dark:border-rose-500/30'
                               }`}
                             >
-                              {record.morning === 'present' && <CheckCircle2 className="h-3 w-3 inline" />}
-                              {record.morning === 'absent' && <XCircle className="h-3 w-3 inline" />}
-                              {record.morning === 'leave_pending' && <Clock className="h-3 w-3 inline animate-pulse" />}
-                              {record.morning === 'leave_approved' && <Award className="h-3 w-3 inline" />}
+                              {record.morning === 'present' && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-505" />}
+                              {record.morning === 'absent' && <XCircle className="h-3.5 w-3.5 text-rose-500" />}
+                              {record.morning === 'leave_pending' && <Clock className="h-3.5 w-3.5 animate-pulse text-amber-505" />}
+                              {record.morning === 'leave_approved' && <Award className="h-3.5 w-3.5 text-sky-505" />}
 
                               <span className="capitalize">
                                 {record.morning === 'leave_pending' ? 'Leave Pending' : record.morning === 'leave_approved' ? 'Paid Leave' : record.morning}
@@ -333,20 +333,20 @@ export default function HomeLogsPanel({
                             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Night Shift</span>
                             <button
                               onClick={() => toggleShiftValue(member.id, 'night')}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-200 cursor-pointer flex items-center gap-1 border ${
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 border hover:scale-102 hover:shadow-xs ${
                                 record.night === 'present'
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
+                                  ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30'
                                   : record.night === 'leave_approved'
-                                  ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-900'
+                                  ? 'bg-sky-500/10 text-sky-700 border-sky-500/20 dark:bg-sky-500/15 dark:text-sky-305 dark:border-sky-500/30'
                                   : record.night === 'leave_pending'
-                                  ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
-                                  : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900'
+                                  ? 'bg-amber-500/10 text-amber-700 border-amber-500/20 dark:bg-amber-500/15 dark:text-amber-305 dark:border-amber-500/30'
+                                  : 'bg-rose-500/10 text-rose-700 border-rose-500/20 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30'
                               }`}
                             >
-                              {record.night === 'present' && <CheckCircle2 className="h-3 w-3 inline" />}
-                              {record.night === 'absent' && <XCircle className="h-3 w-3 inline" />}
-                              {record.night === 'leave_pending' && <Clock className="h-3 w-3 inline animate-pulse" />}
-                              {record.night === 'leave_approved' && <Award className="h-3 w-3 inline" />}
+                              {record.night === 'present' && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-505" />}
+                              {record.night === 'absent' && <XCircle className="h-3.5 w-3.5 text-rose-500" />}
+                              {record.night === 'leave_pending' && <Clock className="h-3.5 w-3.5 animate-pulse text-amber-505" />}
+                              {record.night === 'leave_approved' && <Award className="h-3.5 w-3.5 text-sky-505" />}
 
                               <span className="capitalize">
                                 {record.night === 'leave_pending' ? 'Leave Pending' : record.night === 'leave_approved' ? 'Paid Leave' : record.night}
@@ -460,10 +460,10 @@ export default function HomeLogsPanel({
         <div className="lg:col-span-5 flex flex-col gap-6">
           
           {/* Earnings card: money generated till date on a daily basis */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="sleek-card p-5 flex flex-col justify-between">
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight mb-3 flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight mb-3 flex items-center gap-1.5 font-display">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse shadow-sm shadow-emerald-500/50"></span>
                 Daily Earnings Meter
               </h2>
               <p className="text-[11px] text-slate-400 mb-4">Calculated in real-time according to shifts logged so far this month.</p>
@@ -478,22 +478,22 @@ export default function HomeLogsPanel({
                     : 100;
 
                   return (
-                    <div key={member.id} className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl space-y-2">
-                      <div className="flex justify-between items-center text-xs">
+                    <div key={member.id} className="p-3 bg-slate-50/55 dark:bg-slate-950/25 border border-slate-100/50 dark:border-slate-950/50 rounded-xl space-y-2">
+                       <div className="flex justify-between items-center text-xs">
                         <div>
-                          <p className="font-bold text-slate-850 dark:text-slate-200">{member.name}</p>
+                          <p className="font-bold text-slate-800 dark:text-slate-205">{member.name}</p>
                           <p className="text-[10px] text-slate-400">{member.role} • worked {stat.presentShifts} shifts</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-indigo-650 dark:text-indigo-400 text-sm font-mono">{formatCurrency(stat.salaryEarned)}</p>
+                          <p className="font-bold text-indigo-600 dark:text-indigo-400 text-sm font-mono">{formatCurrency(stat.salaryEarned)}</p>
                           <p className="text-[9.5px] text-slate-400">of {formatCurrency(member.monthlySalary)} base</p>
                         </div>
                       </div>
                       
                       {/* Progress Bar representation */}
-                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-1 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-200/60 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                         <div 
-                          className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                          className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-300"
                           style={{ width: `${Math.min(100, percentOfSalary)}%` }}
                         ></div>
                       </div>
@@ -509,7 +509,7 @@ export default function HomeLogsPanel({
           </div>
 
           {/* Admin Permission-Leave Review Approval Queue Widget */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex-1 flex flex-col justify-between">
+          <div className="sleek-card p-5 flex-1 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-1.5 label-admin-approvals">
