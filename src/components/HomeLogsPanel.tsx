@@ -9,6 +9,7 @@ interface HomeLogsPanelProps {
   onSaveDayAttendance: (staffId: string, dateStr: string, data: DayAttendance) => void;
   currentYear: number;
   currentMonth: number;
+  currentAdminName?: 'Akash' | 'Alojyoti' | 'Sumanta';
 }
 
 export default function HomeLogsPanel({
@@ -16,7 +17,8 @@ export default function HomeLogsPanel({
   attendance,
   onSaveDayAttendance,
   currentYear,
-  currentMonth
+  currentMonth,
+  currentAdminName
 }: HomeLogsPanelProps) {
   // Current selected logging date string (YYYY-MM-DD), default is today
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -36,7 +38,9 @@ export default function HomeLogsPanel({
   });
   const [requestShift, setRequestShift] = useState<'morning' | 'night' | 'both'>('both'); // Default changed to both for range
   const [requestNote, setRequestNote] = useState<string>('');
-  const [requestApprover, setRequestApprover] = useState<'Akash' | 'Alojyoti' | 'Sumanta' | 'Any Admin'>('Any Admin');
+  const [requestApprover, setRequestApprover] = useState<'Akash' | 'Alojyoti' | 'Sumanta' | 'Any Admin'>(() => {
+    return currentAdminName || 'Any Admin';
+  });
   const [showRequestForm, setShowRequestForm] = useState<boolean>(false);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
