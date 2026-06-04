@@ -19,6 +19,10 @@ import MonthlyReportView from './components/MonthlyReportView';
 import StaffInputView from './components/StaffInputView';
 import LoginPanel from './components/LoginPanel';
 
+// Firebase core configuration
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db, OperationType, handleFirestoreError } from './firebase';
+
 export default function App() {
   // Authentication State Managers
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
@@ -27,6 +31,8 @@ export default function App() {
   const [currentAdminName, setCurrentAdminName] = useState<'Akash' | 'Alojyoti' | 'Sumanta'>(() => {
     return (localStorage.getItem('admin_login_name') as 'Akash' | 'Alojyoti' | 'Sumanta') || 'Akash';
   });
+
+  const [isDbLoading, setIsDbLoading] = useState<boolean>(true);
 
   // 1. Core State Managers
   const [staff, setStaff] = useState<Staff[]>(() => {
@@ -74,6 +80,67 @@ export default function App() {
     localStorage.setItem('attendance_records_v1', JSON.stringify(attendance));
   }, [attendance]);
 
+  // Cloud Firebase Synchronization Layer
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    setIsDbLoading(true);
+
+    // Dynamic listener for /staff
+    const unsubscribeStaff = onSnapshot(collection(db, 'staff'), (snapshot) => {
+      try {
+        if (snapshot.empty) {
+          // Firebase is empty! Let's seed it with our current local staff & attendance
+          console.log("Firestore staff collection is empty. Seeding data to cloud Firestore...");
+          staff.forEach(async (member) => {
+            await setDoc(doc(db, 'staff', member.id), member);
+          });
+          Object.entries(attendance).forEach(async ([staffId, records]) => {
+            await setDoc(doc(db, 'attendance', staffId), { staffId, records });
+          });
+          setIsDbLoading(false);
+          return;
+        }
+
+        const staffList: Staff[] = [];
+        snapshot.forEach((doc) => {
+          staffList.push(doc.data() as Staff);
+        });
+        setStaff(staffList);
+        setIsDbLoading(false);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, 'staff');
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'staff');
+    });
+
+    // Dynamic listener for /attendance
+    const unsubscribeAttendance = onSnapshot(collection(db, 'attendance'), (snapshot) => {
+      try {
+        if (snapshot.empty) return;
+
+        const attendanceMap: AttendanceRecord = {};
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data && data.staffId) {
+            attendanceMap[data.staffId] = data.records || {};
+          }
+        });
+        setAttendance(attendanceMap);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, 'attendance');
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'attendance');
+    });
+
+    return () => {
+      unsubscribeStaff();
+      unsubscribeAttendance();
+    };
+  }, [isLoggedIn]);
+
   // 2. Real-time dynamic business calculators
   const salaryBreakdowns = useMemo<SalaryBreakdown[]>(() => {
     return staff.map(member => 
@@ -102,33 +169,48 @@ export default function App() {
     return unloggedTodayCount;
   }, [staff, attendance]);
 
-  // 3. State update transactional methods
-  const handleAddStaff = (newStaff: Staff) => {
-    setStaff(prev => [...prev, newStaff]);
+  // 3. State update transactional methods (with remote firestore sync writebacks)
+  const handleAddStaff = async (newStaff: Staff) => {
+    try {
+      await setDoc(doc(db, 'staff', newStaff.id), newStaff);
+      await setDoc(doc(db, 'attendance', newStaff.id), { staffId: newStaff.id, records: {} });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `staff/${newStaff.id}`);
+    }
   };
 
-  const handleUpdateStaff = (staffId: string, name: string, salary: number, joiningDate: string, role: RoleType) => {
-    setStaff(prev => prev.map(s => s.id === staffId ? { ...s, name, monthlySalary: salary, joiningDate, role } : s));
+  const handleUpdateStaff = async (staffId: string, name: string, salary: number, joiningDate: string, role: RoleType) => {
+    try {
+      await updateDoc(doc(db, 'staff', staffId), { name, monthlySalary: salary, joiningDate, role });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `staff/${staffId}`);
+    }
   };
 
-  const handleDeleteStaff = (staffId: string) => {
-    setStaff(prev => prev.filter(s => s.id !== staffId));
-    setAttendance(prev => {
-      const copy = { ...prev };
-      delete copy[staffId];
-      return copy;
-    });
+  const handleDeleteStaff = async (staffId: string) => {
+    try {
+      await deleteDoc(doc(db, 'staff', staffId));
+      await deleteDoc(doc(db, 'attendance', staffId));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `staff/${staffId}`);
+    }
   };
 
-  const handleSaveDayAttendance = (staffId: string, dateStr: string, data: DayAttendance) => {
-    setAttendance(prev => {
-      const staffRecords = { ...(prev[staffId] || {}) };
-      staffRecords[dateStr] = data;
-      return { ...prev, [staffId]: staffRecords };
-    });
+  const handleSaveDayAttendance = async (staffId: string, dateStr: string, data: DayAttendance) => {
+    try {
+      const docRef = doc(db, 'attendance', staffId);
+      await setDoc(docRef, {
+        staffId,
+        records: {
+          [dateStr]: data
+        }
+      }, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `attendance/${staffId}`);
+    }
   };
 
-  const handleSaveBulkAttendance = (
+  const handleSaveBulkAttendance = async (
     staffId: string,
     startDateStr: string,
     endDateStr: string,
@@ -138,24 +220,28 @@ export default function App() {
   ) => {
     const start = new Date(startDateStr);
     const end = new Date(endDateStr);
+    const recordsObj: Record<string, any> = {};
 
-    setAttendance(prev => {
-      const staffRecords = { ...(prev[staffId] || {}) };
-      
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dayOfWeek = d.getDay();
-        if (dayOfWeek === 0) continue; // Intentionally skip Sunday rests
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek === 0) continue; // Intentionally skip Sunday rests
 
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        staffRecords[dateStr] = {
-          morning: morningStatus,
-          night: nightStatus,
-          note: note ? note : undefined
-        };
-      }
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      recordsObj[dateStr] = {
+        morning: morningStatus,
+        night: nightStatus,
+        ...(note ? { note } : {})
+      };
+    }
 
-      return { ...prev, [staffId]: staffRecords };
-    });
+    try {
+      await setDoc(doc(db, 'attendance', staffId), {
+        staffId,
+        records: recordsObj
+      }, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `attendance/${staffId}`);
+    }
   };
 
   const handleLogin = (adminName: 'Akash' | 'Alojyoti' | 'Sumanta') => {
@@ -170,9 +256,19 @@ export default function App() {
     localStorage.setItem('is_admin_logged_in', 'false');
   };
 
-  const handleRestoreBackupState = (newStaff: Staff[], newAttendance: AttendanceRecord) => {
-    setStaff(newStaff);
-    setAttendance(newAttendance);
+  const handleRestoreBackupState = async (newStaff: Staff[], newAttendance: AttendanceRecord) => {
+    try {
+      // Set staff
+      for (const member of newStaff) {
+        await setDoc(doc(db, 'staff', member.id), member);
+      }
+      // Set attendance
+      for (const [staffId, records] of Object.entries(newAttendance)) {
+        await setDoc(doc(db, 'attendance', staffId), { staffId, records });
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'backup_restore');
+    }
   };
 
   // Nav configuration
@@ -209,10 +305,19 @@ export default function App() {
           </div>
 
           <div id="header-control-cluster" className="flex items-center gap-3">
-            {/* Telemetry/Database indicator (Silent representation) */}
-            <div className="hidden md:flex items-center gap-1.5 text-[10px] bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-mono">
-              <Activity className="h-3 w-3 animate-pulse shrink-0" />
-              <span>Offline-First Secure</span>
+            {/* Telemetry/Database indicator (Live sync representation) */}
+            <div className="hidden md:flex items-center gap-1.5 text-[10px] bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 px-2.5 py-1 rounded-full font-mono">
+              {isDbLoading ? (
+                <>
+                  <RefreshCw className="h-3 w-3 animate-spin text-amber-500 shrink-0" />
+                  <span className="text-amber-500 font-bold">Cloud Syncing...</span>
+                </>
+              ) : (
+                <>
+                  <Activity className="h-3 w-3 text-emerald-500 shrink-0" />
+                  <span className="text-emerald-500 font-bold">Cloud Synced & Live</span>
+                </>
+              )}
             </div>
 
             {/* Notification bell */}

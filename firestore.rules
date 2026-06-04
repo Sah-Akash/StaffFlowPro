@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidStaff(data) {
+      return data.keys().hasAll(['id', 'name', 'role', 'monthlySalary', 'joiningDate'])
+        && data.keys().size() == 5
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 100
+        && data.role is string && data.role.size() <= 100
+        && (data.monthlySalary is int || data.monthlySalary is float) && data.monthlySalary >= 0
+        && data.joiningDate is string && data.joiningDate.size() <= 30;
+    }
+
+    function isValidAttendance(data) {
+      return data.keys().hasAll(['staffId', 'records'])
+        && data.keys().size() == 2
+        && data.staffId is string && data.staffId.size() <= 128
+        && data.records is map;
+    }
+
+    match /staff/{staffId} {
+      allow read: if true;
+      allow create, update: if isValidId(staffId) && isValidStaff(request.resource.data);
+      allow delete: if isValidId(staffId);
+    }
+
+    match /attendance/{staffId} {
+      allow read: if true;
+      allow create, update: if isValidId(staffId) && isValidAttendance(request.resource.data);
+      allow delete: if isValidId(staffId);
+    }
+  }
+}

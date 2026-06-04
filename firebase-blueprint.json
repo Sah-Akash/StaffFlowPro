@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "Staff": {
+      "title": "Staff",
+      "description": "Represents a staff member profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "monthlySalary": { "type": "number" },
+        "joiningDate": { "type": "string" }
+      },
+      "required": ["id", "name", "role", "monthlySalary", "joiningDate"]
+    },
+    "DayAttendance": {
+      "title": "DayAttendance",
+      "description": "Status and approvals for a day's morning and night shifts",
+      "type": "object",
+      "properties": {
+        "morning": { "type": "string" },
+        "night": { "type": "string" },
+        "note": { "type": "string" },
+        "morningApprovedBy": { "type": "string" },
+        "nightApprovedBy": { "type": "string" },
+        "requestedApprover": { "type": "string" }
+      },
+      "required": ["morning", "night"]
+    },
+    "StaffAttendance": {
+      "title": "StaffAttendance",
+      "description": "All attendance records mapped per staff member",
+      "type": "object",
+      "properties": {
+        "staffId": { "type": "string" },
+        "records": { "type": "object" }
+      },
+      "required": ["staffId", "records"]
+    }
+  },
+  "firestore": {
+    "/staff/{staffId}": {
+      "schema": "Staff",
+      "description": "Collection of staff member profile details"
+    },
+    "/attendance/{staffId}": {
+      "schema": "StaffAttendance",
+      "description": "Collection of attendance maps associated with each staff member"
+    }
+  }
+}
