@@ -21,7 +21,7 @@ import LoginPanel from './components/LoginPanel';
 
 // Firebase core configuration
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db, OperationType, handleFirestoreError } from './firebase';
+import { db, OperationType, handleFirestoreError, sanitizeDataForFirestore } from './firebase';
 
 export default function App() {
   // Authentication State Managers
@@ -93,10 +93,10 @@ export default function App() {
           // Firebase is empty! Let's seed it with our current local staff & attendance
           console.log("Firestore staff collection is empty. Seeding data to cloud Firestore...");
           staff.forEach(async (member) => {
-            await setDoc(doc(db, 'staff', member.id), member);
+            await setDoc(doc(db, 'staff', member.id), sanitizeDataForFirestore(member));
           });
           Object.entries(attendance).forEach(async ([staffId, records]) => {
-            await setDoc(doc(db, 'attendance', staffId), { staffId, records });
+            await setDoc(doc(db, 'attendance', staffId), sanitizeDataForFirestore({ staffId, records }));
           });
           setIsDbLoading(false);
           return;
@@ -172,8 +172,8 @@ export default function App() {
   // 3. State update transactional methods (with remote firestore sync writebacks)
   const handleAddStaff = async (newStaff: Staff) => {
     try {
-      await setDoc(doc(db, 'staff', newStaff.id), newStaff);
-      await setDoc(doc(db, 'attendance', newStaff.id), { staffId: newStaff.id, records: {} });
+      await setDoc(doc(db, 'staff', newStaff.id), sanitizeDataForFirestore(newStaff));
+      await setDoc(doc(db, 'attendance', newStaff.id), sanitizeDataForFirestore({ staffId: newStaff.id, records: {} }));
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `staff/${newStaff.id}`);
     }
@@ -181,7 +181,7 @@ export default function App() {
 
   const handleUpdateStaff = async (staffId: string, name: string, salary: number, joiningDate: string, role: RoleType) => {
     try {
-      await updateDoc(doc(db, 'staff', staffId), { name, monthlySalary: salary, joiningDate, role });
+      await updateDoc(doc(db, 'staff', staffId), sanitizeDataForFirestore({ name, monthlySalary: salary, joiningDate, role }));
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `staff/${staffId}`);
     }
@@ -199,12 +199,12 @@ export default function App() {
   const handleSaveDayAttendance = async (staffId: string, dateStr: string, data: DayAttendance) => {
     try {
       const docRef = doc(db, 'attendance', staffId);
-      await setDoc(docRef, {
+      await setDoc(docRef, sanitizeDataForFirestore({
         staffId,
         records: {
           [dateStr]: data
         }
-      }, { merge: true });
+      }), { merge: true });
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `attendance/${staffId}`);
     }
@@ -235,10 +235,10 @@ export default function App() {
     }
 
     try {
-      await setDoc(doc(db, 'attendance', staffId), {
+      await setDoc(doc(db, 'attendance', staffId), sanitizeDataForFirestore({
         staffId,
         records: recordsObj
-      }, { merge: true });
+      }), { merge: true });
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `attendance/${staffId}`);
     }
@@ -260,11 +260,11 @@ export default function App() {
     try {
       // Set staff
       for (const member of newStaff) {
-        await setDoc(doc(db, 'staff', member.id), member);
+        await setDoc(doc(db, 'staff', member.id), sanitizeDataForFirestore(member));
       }
       // Set attendance
       for (const [staffId, records] of Object.entries(newAttendance)) {
-        await setDoc(doc(db, 'attendance', staffId), { staffId, records });
+        await setDoc(doc(db, 'attendance', staffId), sanitizeDataForFirestore({ staffId, records }));
       }
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'backup_restore');

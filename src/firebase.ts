@@ -54,6 +54,29 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw new Error(JSON.stringify(errInfo));
 }
 
+export function sanitizeDataForFirestore<T>(data: T): T {
+  if (data === undefined) {
+    return null as any;
+  }
+  if (data === null) {
+    return null as any;
+  }
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeDataForFirestore(item)) as any;
+  }
+  if (typeof data === 'object') {
+    const cleaned: any = {};
+    for (const key of Object.keys(data as any)) {
+      const val = (data as any)[key];
+      if (val !== undefined) {
+        cleaned[key] = sanitizeDataForFirestore(val);
+      }
+    }
+    return cleaned;
+  }
+  return data;
+}
+
 async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
