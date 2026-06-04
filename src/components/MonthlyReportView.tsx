@@ -191,7 +191,7 @@ export default function MonthlyReportView({
           <p className="text-xs text-slate-400 mt-0.5">Summary of total days worked and calculations for exact paysheets</p>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-slate-50 dark:bg-slate-950 text-slate-505 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px]">
               <tr>
@@ -266,6 +266,62 @@ export default function MonthlyReportView({
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Brand-new touch responsive mobile layout */}
+        <div className="md:hidden divide-y divide-slate-150 dark:divide-slate-800">
+          {reportBreakdowns.map((stat) => {
+            const records = attendance[stat.staffId] || {};
+            let approvedLeavesCount = 0;
+            Object.keys(records).forEach(dStr => {
+              const d = new Date(dStr);
+              if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
+                const rec = records[dStr];
+                if (rec) {
+                  if (rec.morning === 'leave_approved') approvedLeavesCount++;
+                  if (rec.night === 'leave_approved') approvedLeavesCount++;
+                }
+              }
+            });
+
+            return (
+              <div key={stat.staffId} className="p-4 space-y-3 bg-white dark:bg-slate-950/10">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{stat.staffName}</h4>
+                    <p className="text-[10px] text-slate-400 font-medium">{stat.role} Specialist</p>
+                  </div>
+                  <span className="px-2.5 py-1 font-mono font-extrabold text-xs bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                    {formatCurrency(stat.finalPayable)}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 p-2.5 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-150/50 dark:border-slate-800/60 text-[11px]">
+                  <div className="flex justify-between items-center pr-2 border-r border-slate-100 dark:border-slate-850">
+                    <span className="text-slate-400 font-medium">Available</span>
+                    <span className="font-mono font-bold text-slate-750 dark:text-slate-300">{stat.totalWorkingDays}d</span>
+                  </div>
+                  <div className="flex justify-between items-center pl-2">
+                    <span className="text-emerald-500 font-medium">Worked</span>
+                    <span className="font-mono font-bold text-emerald-650 dark:text-emerald-400">{stat.presentShifts - approvedLeavesCount}s</span>
+                  </div>
+                  <div className="flex justify-between items-center pr-2 border-r border-slate-100 dark:border-slate-850 pt-1.5 border-t border-slate-100 dark:border-slate-850/40">
+                    <span className="text-sky-505 text-sky-500 font-medium">Paid Lvs</span>
+                    <span className="font-mono font-bold text-sky-600 dark:text-sky-400">{approvedLeavesCount}s</span>
+                  </div>
+                  <div className="flex justify-between items-center pl-2 pt-1.5 border-t border-slate-100 dark:border-slate-850/40">
+                    <span className="text-rose-500 font-medium">Absences</span>
+                    <span className="font-mono font-bold text-rose-500">{stat.missedShifts}s</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-[10.5px] font-mono text-slate-450 dark:text-slate-400">
+                  <span>Gross Base: {formatCurrency(stat.monthlySalary)}</span>
+                  <span className="font-bold text-rose-500">Deductions: -{formatCurrency(stat.deductions)}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
       </div>

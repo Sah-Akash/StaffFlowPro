@@ -95,19 +95,19 @@ export default function StaffCalendarView({
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Staff Selector buttons */}
-            <div className="flex p-0.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+            <div className="flex overflow-x-auto max-w-full scrollbar-none p-0.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 gap-1 sm:gap-0">
               {staffList.map(s => (
                 <button
                   key={s.id}
                   onClick={() => setSelectedStaffId(s.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                     selectedStaffId === s.id
-                      ? 'bg-white dark:bg-slate-905 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/20'
-                      : 'text-slate-400 hover:text-slate-950'
+                      ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/20'
+                      : 'text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
                   <User className="h-3 w-3" />
-                  {s.name} ({s.role})
+                  <span>{s.name} ({s.role})</span>
                 </button>
               ))}
             </div>
@@ -178,7 +178,7 @@ export default function StaffCalendarView({
                 return (
                   <div 
                     key={day.dateStr} 
-                    className={`min-h-[84px] p-2 rounded-xl border flex flex-col justify-between transition-colors ${
+                    className={`min-h-[64px] sm:min-h-[84px] p-1.5 sm:p-2 rounded-xl border flex flex-col justify-between transition-colors ${
                       day.isToday 
                         ? 'border-indigo-500 bg-indigo-50/10 dark:bg-indigo-950/10 shadow-xs' 
                         : isSunday 
@@ -188,17 +188,17 @@ export default function StaffCalendarView({
                   >
                     {/* Day number & today marker */}
                     <div className="flex justify-between items-center">
-                      <span className={`text-[11px] font-bold font-mono ${
+                      <span className={`text-[10px] sm:text-[11px] font-bold font-mono ${
                         isSunday 
                           ? 'text-rose-500' 
                           : day.isToday 
-                          ? 'text-indigo-600 dark:text-indigo-400 font-extrabold ring-1 ring-indigo-300 dark:ring-indigo-800 rounded-full w-5 h-5 flex items-center justify-center' 
+                          ? 'text-indigo-600 dark:text-indigo-400 font-extrabold ring-1 ring-indigo-300 dark:ring-indigo-800 rounded-full w-4.5 h-4.5 sm:w-5 sm:h-5 flex items-center justify-center text-[9px] sm:text-[11px]' 
                           : 'text-slate-600 dark:text-slate-350'
                       }`}>
                         {day.dayNumber}
                       </span>
                       {day.isToday && (
-                        <span className="text-[7.5px] uppercase font-bold text-indigo-650 bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 rounded px-1">
+                        <span className="hidden xs:inline-block text-[7.5px] uppercase font-bold text-indigo-650 bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 rounded px-1">
                           Today
                         </span>
                       )}
@@ -206,49 +206,79 @@ export default function StaffCalendarView({
 
                     {/* Shifts status cells */}
                     {isSunday ? (
-                      <div className="text-[10px] text-center italic font-semibold text-rose-400 dark:text-rose-500/80 my-2">
-                        Weekly Off
+                      <div className="text-[8px] sm:text-[10px] text-center italic font-semibold text-rose-450 dark:text-rose-500/80 my-1 sm:my-2">
+                        Off
                       </div>
                     ) : (
-                      <div className="space-y-1.5 pt-2">
+                      <div className="space-y-1 sm:space-y-1.5 pt-1 sm:pt-2">
                         
                         {/* Morning indicator */}
-                        <div className="flex justify-between items-center">
-                          <span className="text-[8.5px] text-slate-400 uppercase font-bold tracking-wider font-mono">M</span>
+                        <div className="flex sm:flex-row flex-col items-center sm:justify-between justify-center gap-0.5 sm:gap-0">
+                          <span className="text-[8px] sm:text-[8.5px] text-slate-400 uppercase font-bold tracking-wider font-mono">M</span>
                           {morningStatus ? (
-                            <span className={`text-[8.5px] font-bold rounded-lg px-2 py-0.5 border ${
-                              morningStatus === 'present'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
-                                : morningStatus === 'leave_approved'
-                                ? 'bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-900'
-                                : morningStatus === 'leave_pending'
-                                ? 'bg-amber-100/30 text-amber-500 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
-                                : 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900'
-                            }`} title={morningStatus === 'leave_approved' ? `Approved by ${record?.morningApprovedBy}` : morningStatus}>
-                              {morningStatus === 'leave_approved' ? `Leave✓` : morningStatus === 'leave_pending' ? 'Pending' : morningStatus}
-                            </span>
+                            <>
+                              {/* Desktop text pill */}
+                              <span className={`hidden sm:inline-block text-[8.5px] font-bold rounded-lg px-2 py-0.5 border ${
+                                morningStatus === 'present'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
+                                  : morningStatus === 'leave_approved'
+                                  ? 'bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-900'
+                                  : morningStatus === 'leave_pending'
+                                  ? 'bg-amber-105 bg-amber-50 text-amber-500 border-amber-200 dark:bg-amber-955/20 dark:text-amber-400 dark:border-amber-900'
+                                  : 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900'
+                              }`} title={morningStatus === 'leave_approved' ? `Approved by ${record?.morningApprovedBy}` : morningStatus}>
+                                {morningStatus === 'leave_approved' ? `Leave✓` : morningStatus === 'leave_pending' ? 'Pending' : morningStatus}
+                              </span>
+                              {/* Mobile circular badge */}
+                              <span className={`sm:hidden inline-flex items-center justify-center w-3 w-3 h-3 h-3 text-[8px] font-extrabold rounded-full ${
+                                morningStatus === 'present'
+                                  ? 'bg-emerald-500 text-white'
+                                  : morningStatus === 'leave_approved'
+                                  ? 'bg-sky-505 bg-sky-550 bg-sky-500 text-white'
+                                  : morningStatus === 'leave_pending'
+                                  ? 'bg-amber-500 text-slate-950 animate-pulse font-black'
+                                  : 'bg-rose-500 text-white'
+                              }`} title={morningStatus === 'leave_approved' ? `Approved by ${record?.morningApprovedBy}` : morningStatus}>
+                                {morningStatus === 'present' ? 'P' : morningStatus === 'leave_approved' ? 'L' : morningStatus === 'leave_pending' ? '?' : 'A'}
+                              </span>
+                            </>
                           ) : (
-                            <span className="text-[8px] text-slate-400 italic">Unmarked</span>
+                            <span className="text-[7.5px] sm:text-[8px] text-slate-400 italic font-mono">-</span>
                           )}
                         </div>
 
                         {/* Night indicator */}
-                        <div className="flex justify-between items-center">
-                          <span className="text-[8.5px] text-slate-400 uppercase font-bold tracking-wider font-mono">N</span>
+                        <div className="flex sm:flex-row flex-col items-center sm:justify-between justify-center gap-0.5 sm:gap-0">
+                          <span className="text-[8px] sm:text-[8.5px] text-slate-400 uppercase font-bold tracking-wider font-mono">N</span>
                           {nightStatus ? (
-                            <span className={`text-[8.5px] font-bold rounded-lg px-2 py-0.5 border ${
-                              nightStatus === 'present'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
-                                : nightStatus === 'leave_approved'
-                                ? 'bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-900'
-                                : nightStatus === 'leave_pending'
-                                ? 'bg-amber-100/30 text-amber-500 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
-                                : 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900'
-                            }`} title={nightStatus === 'leave_approved' ? `Approved by ${record?.nightApprovedBy}` : nightStatus}>
-                              {nightStatus === 'leave_approved' ? `Leave✓` : nightStatus === 'leave_pending' ? 'Pending' : nightStatus}
-                            </span>
+                            <>
+                              {/* Desktop text pill */}
+                              <span className={`hidden sm:inline-block text-[8.5px] font-bold rounded-lg px-2 py-0.5 border ${
+                                nightStatus === 'present'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
+                                  : nightStatus === 'leave_approved'
+                                  ? 'bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-900'
+                                  : nightStatus === 'leave_pending'
+                                  ? 'bg-amber-50 text-amber-500 border-amber-200 dark:bg-amber-955/20 dark:text-amber-400 dark:border-amber-900'
+                                  : 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900'
+                              }`} title={nightStatus === 'leave_approved' ? `Approved by ${record?.nightApprovedBy}` : nightStatus}>
+                                {nightStatus === 'leave_approved' ? `Leave✓` : nightStatus === 'leave_pending' ? 'Pending' : nightStatus}
+                              </span>
+                              {/* Mobile circular badge */}
+                              <span className={`sm:hidden inline-flex items-center justify-center w-3 w-3 h-3 h-3 text-[8px] font-extrabold rounded-full ${
+                                nightStatus === 'present'
+                                  ? 'bg-emerald-500 text-white'
+                                  : nightStatus === 'leave_approved'
+                                  ? 'bg-sky-500 text-white'
+                                  : nightStatus === 'leave_pending'
+                                  ? 'bg-amber-500 text-slate-950 animate-pulse font-black'
+                                  : 'bg-rose-500 text-white'
+                              }`} title={nightStatus === 'leave_approved' ? `Approved by ${record?.nightApprovedBy}` : nightStatus}>
+                                {nightStatus === 'present' ? 'P' : nightStatus === 'leave_approved' ? 'L' : nightStatus === 'leave_pending' ? '?' : 'A'}
+                              </span>
+                            </>
                           ) : (
-                            <span className="text-[8px] text-slate-400 italic">Unmarked</span>
+                            <span className="text-[7.5px] sm:text-[8px] text-slate-400 italic font-mono">-</span>
                           )}
                         </div>
 

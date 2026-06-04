@@ -109,6 +109,15 @@ input, select, textarea {
   transition: all 0.2s ease-in-out;
 }
 
+/* Custom utilities for horizontal mobile swiping without bars */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 /* Print Configuration */
 @media print {
   body {
